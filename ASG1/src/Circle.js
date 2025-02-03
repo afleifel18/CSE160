@@ -1,3 +1,5 @@
+// Circle.js 
+//afleifel@ucsc.edu
 class Circle{
   constructor(segments = 10){
     this.type = 'circle';

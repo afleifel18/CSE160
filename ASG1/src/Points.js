@@ -1,3 +1,5 @@
+// Point.js 
+//afleifel@ucsc.edu
 class Point{
   constructor(){
     this.type = 'point';

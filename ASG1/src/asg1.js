@@ -1,4 +1,5 @@
-// ColoredPoint.js (c) 2012 matsuda
+// asg1.js 
+//afleifel@ucsc.edu
 // Vertex shader program
 var VSHADER_SOURCE =
   'attribute vec4 a_Position;\n' +

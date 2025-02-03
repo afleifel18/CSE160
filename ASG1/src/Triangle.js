@@ -1,3 +1,5 @@
+// triangle.js 
+//afleifel@ucsc.edu
 class Triangle{
   constructor(){
     this.type = 'triangle';
