@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>MINECRAFT MAZE</title>
+  </head>
+  
+  <body onload="main()">
+    ANDRE FLEIFEL
+    <p>
+    AFLEIFEL@UCSC.COM
+    <p>
+    IT IS A MAZE, FIND THE EXIT!
+    <p>
+    W-A-S-D KEYS TO MOVE, Q-E KEYS TO ROTATE CAMERA
+    <p>
+    -can rotate camera with mouse
+    <p>
+    -multiple textures (dirt cubes & grass cube for ground plane)
+    <p>
+    -simple game implemented (maze - find the exit)
+    <p>
+    -performance is above 10FPS (im getting 200) 
+    <p>
+    -Wow effect! Beautiful world WITH A SUN! :)
+    <p>
+    <canvas id="webgl" width="400" height="400">
+    Please use a browser that supports "canvas"
+    </canvas>
+    
+    <p id = "fps"> xx </p>
+    
+    Neck <input type="range" min="-30" max="30" value="0" class="slider" id="yellowSlide">
+    Animation: 
+    <button type="button" id="animationON"> ON </button>
+    <button type="button" id="animationOFF"> OFF </button>
+    
+    <p>
+    
+    Head <input type="range" min="-45" max="45" value="0" class="slider" id="magentaSlide">
+    Animation: 
+    <button type="button" id="magentaAnimationON"> ON </button>
+    <button type="button" id="magentaAnimationOFF"> OFF </button>
+    <p>
+    Unicorn <input type="range" min="-30" max="30" value="0" class="slider" id="topSlide">
+    Animation: 
+    <button type="button" id="topAnimationON"> ON </button>
+    <button type="button" id="topAnimationOFF"> OFF </button>
+    <p>  
+    WALK/RUN poke animation : 
+    <button type="button" id="runAnimationON"> ON </button>
+    <button type="button" id="runAnimationOFF"> OFF </button>
+    <p>  
+    Camera Angle <input type="range" min="0" max="90" value="5" class="slider" id="angleSlide">
+    <p>
+     YOU CAN ROTATE WITH MOUSE ON CANVAS
+    <p>
+    
+    <script src="../lib/webgl-utils.js"></script>
+    <script src="../lib/webgl-debug.js"></script>
+    <script src="../lib/cuon-utils.js"></script>
+    <script src="../lib/cuon-matrix.js"></script>
+    <script src="Points.js"></script>
+    <script src="Triangle.js"></script>
+    <script src="Circle.js"></script>
+    <script src="Cube.js"></script>
+    <script src="Camera.js"></script>
+    <script src="World.js"></script>
+  </body>
+</html>
