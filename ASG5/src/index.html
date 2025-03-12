@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Three.js Basic Scene</title>
+    <style>
+        body { margin: 0; }
+        canvas { display: block; }
+        #instructions {
+          position: absolute;
+          top: 10px;
+          left: 10px;
+          padding: 10px 15px;
+          background: rgba(0, 0, 0, 0.7);
+          color: white;
+          font-family: Arial, sans-serif;
+          font-size: 16px;
+          border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div id="instructions">
+      Press 'C' to change the camera <br>
+      Use Mouse to rotate with Orbit Controls
+    </div>
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "../threejs/build/three.module.js",
+            "three/addons/": "../threejs/examples/jsm/"
+            
+        }
+    }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { OBJLoader } from 'three/addons/loaders/OBJLoader.js';
+        import { MTLLoader } from 'three/addons/loaders/MTLLoader.js';
+        
+
+        // Scene
+        const scene = new THREE.Scene();
+        
+        // render
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap; // Softer shadows
+        document.body.appendChild(renderer.domElement);
+        
+        
+        // Main Camera (Default)
+        const camera1 = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera1.position.set(5, 3, 5); // Adjust first camera position
+
+        // Second Camera (Alternative View)
+        const camera2 = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera2.position.set(-5, 5, -5); // Different position for second camera
+
+        // Orbit Controls
+        const controls1 = new OrbitControls(camera1, renderer.domElement);
+        const controls2 = new OrbitControls(camera2, renderer.domElement);
+
+        let activeCamera = camera1; // Start with camera1
+        let activeControls = controls1;
+        
+
+        // Switch Cameras on Key Press
+        window.addEventListener("keydown", (event) => {
+          if (event.key === "c" || event.key === "C") {
+            if (activeCamera === camera1) {
+                activeCamera = camera2;
+                activeControls = controls2;
+            } else {
+                activeCamera = camera1;
+                activeControls = controls1;
+            }
+            console.log("Switched Camera"); // Debug message in console
+          }
+        });
+        
+        
+        // 3D OBJECT IMPORT
+        // 3D object from https://free3d.com/3d-model/airplane-v2--659376.html
+        const mtlLoader = new MTLLoader();
+        mtlLoader.load('./textures/11804_Airplane_v2_l2.mtl', (materials) => {
+          materials.preload();
+          const objLoader = new OBJLoader();
+          objLoader.setMaterials(materials); // Apply materials from MTL file
+          objLoader.load('./textures/11804_Airplane_v2_l2.obj', (object) => {
+              object.position.set(0, -1, 0);
+              object.scale.set(.003, .003, .003);
+              object.rotation.x = THREE.MathUtils.degToRad(-90);
+              
+              object.traverse((child) => {
+                if (child.isMesh) {
+                  child.castShadow = true;  // Object casts shadows
+                  child.receiveShadow = true;  // Object receives shadows
+                }
+              });
+              
+              function createBillboardText(text) {
+                // Create a canvas to draw text
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+
+                // Set canvas size
+                canvas.width = 512;
+                canvas.height = 256;
+
+                // Background (Optional: Can be transparent if removed)
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.5)'; // Semi-transparent black
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                // Text Style
+                ctx.font = 'Bold 80px Arial';
+                ctx.fillStyle = 'white';
+                ctx.textAlign = 'center';
+                ctx.fillText(text, canvas.width / 2, canvas.height / 2);
+
+                // Create Texture
+                const texture = new THREE.CanvasTexture(canvas);
+                return texture;
+              }
+
+              // Create Billboard
+              const billboardGeometry = new THREE.PlaneGeometry(2, 1); // Width, Height
+              const billboardMaterial = new THREE.MeshBasicMaterial({
+                map: createBillboardText("My Airplane"), // Custom Text
+                transparent: true
+              });
+              const billboard = new THREE.Mesh(billboardGeometry, billboardMaterial);
+
+              // Position Billboard Above Airplane
+              billboard.position.set(0, 0, 500);
+              billboard.scale.set(200, 200, 200);
+
+              // Add Billboard to Airplane
+              object.add(billboard);
+  
+              // Camera Position
+              activeCamera.position.z = 5;
+              activeCamera.position.y = 2;
+              
+              scene.add(object);
+              window.billboard = billboard;
+            });
+          });
+        
+        
+        // Load Skybox
+        const skyboxLoader = new THREE.CubeTextureLoader();
+        const skybox = skyboxLoader.load([
+          './textures/left.jpg',   // -X (Left)
+          './textures/right.jpg',  // +X (Right)
+          './textures/top.jpg',  // +X (top)
+          './textures/bottom.jpg', // -Y (Bottom)
+          './textures/front.jpg',  // +Z (Front)
+          './textures/back.jpg'    // -Z (Back)
+        ]);
+
+        // Apply the Skybox to the Scene Background
+        scene.background = skybox;  
+        
+        // Enable shadows in the renderer
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap; // Softer shadows
+
+        // Lighting
+        // Ambient Light: Soft illumination
+        const ambientLight = new THREE.AmbientLight(0xffffff, 2); // Intensity increased to brighten scene
+        scene.add(ambientLight);
+
+        // Directional Light: from one direction
+        const directionalLight = new THREE.DirectionalLight(0xfff0e0, 2); // Brighter intensity
+        directionalLight.position.set(-2, 20, 25).normalize();
+        directionalLight.castShadow = true; // Enable shadow casting
+        directionalLight.shadow.mapSize.width = 4096; // Higher resolution
+        directionalLight.shadow.mapSize.height = 4096;
+        directionalLight.shadow.camera.near = 0.5;
+        directionalLight.shadow.camera.far = 100;
+        directionalLight.shadow.camera.left = -60; // Increase left boundary
+        directionalLight.shadow.camera.right = 60; // Increase right boundary
+        directionalLight.shadow.camera.top = 60; // Increase top boundary
+        directionalLight.shadow.camera.bottom = -60;
+        scene.add(directionalLight);
+
+        // Point Light: add brightness from a single point like light bulb
+        const pointLight = new THREE.PointLight(0xff0000, 5, 50); // Intensity = 3, Distance = 50
+        pointLight.position.set(0, 4, 0);
+        pointLight.castShadow = true; // Enable shadows
+        scene.add(pointLight);
+        
+        // Spotlight: Focused light shining on the airplane
+        const spotlight = new THREE.SpotLight(0xffffff, 100); // White light, intensity 5
+        spotlight.position.set(-1, 5, 3); // Position the spotlight above and slightly in front
+        spotlight.angle = Math.PI / 8; // Narrower beam (30 degrees)
+        spotlight.penumbra = 0.2; // Soft edges
+        spotlight.decay = 2; // Light fading over distance
+        spotlight.distance = 20; // Light range
+
+        // Enable shadow casting
+        spotlight.castShadow = true;
+        spotlight.shadow.mapSize.width = 2048; // Higher quality shadows
+        spotlight.shadow.mapSize.height = 2048;
+        spotlight.shadow.camera.near = 0.5;
+        spotlight.shadow.camera.far = 100;
+
+        // Point Spotlight at the Airplane
+        spotlight.target.position.set(0, 0, 0); // Adjust if plane position changes
+  
+        scene.add(spotlight);
+        scene.add(spotlight.target);
+        
+        // Load Texture
+        const textureLoader = new THREE.TextureLoader();
+        const floorTexture = textureLoader.load('./textures/floor.jpg');
+
+        // Geometry and Material
+        const boxGeometry = new THREE.BoxGeometry(1, 1, 1);
+        const groundGeometry = new THREE.BoxGeometry(300, .1, 300);
+        const runwayGeometry = new THREE.BoxGeometry(.5, .5, .5);
+        const sphereGeometry = new THREE.SphereGeometry(0.8, 32, 32); // Radius: 0.8, 32 segments
+        const cylinderGeometry = new THREE.CylinderGeometry(0.5, 0.5, 1.5, 32); // Top/Bottom radius: 0.5, Height: 1.5
+
+        function makeInstance(geometry, color, x, y = 0, z, useTexture = false) {
+            let material;
+            if (useTexture) {
+              material = new THREE.MeshPhongMaterial({ map: floorTexture });
+            } else {
+              material = new THREE.MeshPhongMaterial({ color });
+            }
+            const mesh = new THREE.Mesh(geometry, material);
+            
+            // Enable shadows on all objects
+            mesh.castShadow = true;  // Object casts shadows
+            mesh.receiveShadow = true;  // Object receives shadows
+            
+            scene.add(mesh);
+            mesh.position.set(x, y, z);
+            return mesh;
+        }
+        
+        // MAKE GROUND
+        makeInstance(groundGeometry, 0x44aa88,  0,-1.05, 0,  true)  // Cube
+
+        // Create objects
+        const cubes = [
+            makeInstance(boxGeometry, 0x44aa88,  2,.5,-2,  true),  // Cube
+        ];
+        
+        // RUNWAY
+        for (let x = -20; x <= 20; x += .5) {
+          makeInstance(runwayGeometry, 0xffff00,  x,-1.2,2)  // Cube
+          makeInstance(runwayGeometry, 0xffff00,  x,-1.2,-2)
+        }
+        for (let x = -20; x <= 20; x += 1) {
+          makeInstance(runwayGeometry, 0xffff00,  x,-1.2,0)  // Cube
+        }
+        
+        
+        // TREE
+        const trunkRadius = .2;
+        const trunkHeight = 1;
+        const trunkRadialSegments = 12;
+        const trunkGeometry = new THREE.CylinderGeometry(
+          trunkRadius, trunkRadius, trunkHeight, trunkRadialSegments);
+ 
+        const topRadius = trunkRadius * 4;
+        const topHeight = trunkHeight * 2;
+        const topSegments = 12;
+        const topGeometry = new THREE.ConeGeometry(
+            topRadius, topHeight, topSegments);
+        const trunkMaterial = new THREE.MeshPhongMaterial({color: 'brown'});
+        const topMaterial = new THREE.MeshPhongMaterial({color: 'green'});
+        
+        function makeTree(x, z) {
+          const root = new THREE.Object3D();
+          const trunk = new THREE.Mesh(trunkGeometry, trunkMaterial);
+          trunk.position.y = trunkHeight / 2;
+          trunk.castShadow = true;  
+          trunk.receiveShadow = true; 
+          root.add(trunk);
+ 
+          const top = new THREE.Mesh(topGeometry, topMaterial);
+          top.position.y = trunkHeight + topHeight / 2;
+          top.position.y = trunkHeight + topHeight / 2;
+          top.castShadow = true;  // ✅ Tree top casts shadows
+          top.receiveShadow = true;
+          root.add(top);
+ 
+          root.position.set(x, -1, z);
+          root.castShadow = true;  // ✅ Ensure entire tree can cast shadows
+          root.receiveShadow = true;
+          scene.add(root);
+ 
+          return root;
+        }
+        
+        for (let z = -55; z <= 5; z += 10) {
+          for (let x = -50; x <= 50; x += 10) {
+            makeTree(x, z);
+          }
+        }
+        
+
+        // Animation Loop
+        function animate() {
+          requestAnimationFrame(animate);
+
+          // Rotate only the cube
+          cubes[0].rotation.x += 0.01;
+          cubes[0].rotation.y += 0.01;
+
+          // Make billboard always face the camera
+          if (window.billboard) {
+            window.billboard.lookAt(activeCamera.position);
+        }
+
+          activeControls.update();
+          renderer.render(scene, activeCamera);
+        }
+
+        animate();
+
+        // Handle Window Resize
+        window.addEventListener('resize', () => {
+            activeCamera.aspect = window.innerWidth / window.innerHeight;
+            activeCamera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+</html>
+
